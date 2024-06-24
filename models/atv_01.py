@@ -2,14 +2,96 @@ import sys
 import os 
 from models.avaliacao import Avaliacao # importando classe!! 
 
-class Musica:
+class Item_audio: # classe Pai
+    def __init__(self, nome, duracao, tipo):
+        self._nome = nome
+        self._duracao = float(duracao)
+        self._tipo = tipo
+
+
+class PodCast(Item_audio): # sub classe
+    podcasts = []
+    def __init__(self, nome, duracao, espisodio, anfitriao):
+        super().__init__(nome, duracao, 'PodCast')
+        self._episodio = espisodio
+        self._anfitriao = anfitriao
+        self._avaliacao = []
+        PodCast.podcasts.append(self)
+
+    def receber_avaliacao(self, ouvinte, nota):
+        avaliacao = Avaliacao(ouvinte, nota)
+        self._avaliacao.append(avaliacao)
+
+    @classmethod
+    def listar_podcast(cls):
+        print(f'{"Podcast".ljust(25)} | {"Anfitrião".ljust(25)} | {"Duração".ljust(25)} | {"episodio".ljust(25)} | {"Nota"}')
+        for podcast in cls.podcasts:
+            print(f'{podcast._nome.ljust(25)} | {podcast._anfitriao.ljust(25)} | {podcast._duracao} | {podcast._episodio} | {podcast.media_avaliacao}' ) 
+        
+    @property
+    def media_avaliacao(self):
+        ''' TIRANDO MEDIA DAS AVALIACOES  '''
+        if not self._avaliacao:
+            return '-'
+        soma = sum(avaliacao._nota for avaliacao in self._avaliacao) #pega todas as avalicoes e pega apenas as notas e some.
+        quantidade_notas = len(self._avaliacao)
+        media = round(soma/quantidade_notas, 1)
+        return media
+    
+    @property
+    def duracao_tratada(self):
+        ''' TRATANDO A ENTRADA DE DURAÇÃO '''
+        minutos = int(self._duracao)
+        sec = int((self._duracao - minutos)*100)
+        return f"{minutos}:{sec:2}"
+    
+
+class AudioBook(Item_audio):
+    audio_books = []
+    def __init__(self, nome, duracao, autor):
+        super().__init__(nome, duracao, "AudioBook")
+        self._autor = autor
+        self._avaliacao = []
+        AudioBook.audio_books.append(self)
+
+    def receber_avaliacao(self, ouvinte, nota):
+        avaliacao = Avaliacao(ouvinte, nota)
+        self._avaliacao.append(avaliacao)
+
+    @classmethod
+    def listar_audiobook(cls):
+        print(f'{"AudioBook".ljust(25)} | {"Autor".ljust(25)} | {"Duração".ljust(25)} | {"Nota"}')
+        for audiobook in cls.audio_books:
+            print(f'{audiobook._nome.ljust(25)} | {audiobook._autor.ljust(25)} | {audiobook._duracao} | {audiobook.media_avaliacao}')
+
+
+    
+        
+    @property
+    def media_avaliacao(self):
+        ''' TIRANDO MEDIA DAS AVALIACOES  '''
+        if not self._avaliacao:
+            return '-'
+        soma = sum(avaliacao._nota for avaliacao in self._avaliacao) #pega todas as avalicoes e pega apenas as notas e some.
+        quantidade_notas = len(self._avaliacao)
+        media = round(soma/quantidade_notas, 1)
+        return media
+    
+    @property
+    def duracao_tratada(self):
+        ''' TRATANDO A ENTRADA DE DURAÇÃO '''
+        minutos = int(self._duracao)
+        sec = int((self._duracao - minutos)*100)
+        return f"{minutos}:{sec:2}"
+
+
+class Musica(Item_audio): #sub classe
     musicas = []
-    def __init__(self, nome, cantor, categoria, duracao):
-        self._nome = nome.title() # função para manter a primeira letra maiuscula (colocando o '_' ele não pode ser alterado dps de criado.)
+    def __init__(self,nome, cantor, categoria, duracao):
+        super().__init__(nome,duracao, 'Música')
         self._cantor = cantor
         self._categoria = categoria.upper() # todas a letras maiusculas 
         self._logo = categoria.upper() # não aparece para o usuario
-        self._duracao = duracao
         self._avaliacao = [] # infomações não manipulada assim que intancia o objeto. 
         Musica.musicas.append(self) 
 
@@ -80,47 +162,101 @@ def Finalizar_app():
     subtitulo('Finalizando App!!')
     sys.exit
 
-def inserir_musica():
+def inserir_audio():
     '''INSERE A MUSICA ATRAES DAS ENTRADAS DO USUSARIO'''
-    subtitulo("INSIRA SUA MÚSICA")
-    nome = str(input('Digite o nome da música: '))
-    nomes = nome
-    cantor = str(input('Digite o cantor da música: '))
-    categoria = str(input('Digite a categoria da música: '))
-    duracao = float(input('Digite a duração da música: '))
-    nomes = Musica(nome,cantor,categoria,duracao)
-    
-    while  True:
-        ''' CRIANDO O INPUT DA NOTA COM TRATAMENTO PARA ERRO '''
-        try:
-            nota = float(input("Nota para a Música"))
-            nomes.receber_avaliacao('Anônimo', nota)
-            break
-        except ValueError as e: 
-            print('Erro Tente Novamente!!')
-            input("tecle para tentar novamente.")
-    print('Adicionada com Sucesso!!')
-    input('Tecle para voltar ao menu')
-    menu()
+    subtitulo("INSIRA SEU AÚDIO")
+    nome = str(input('Digite o nome do aúdio: '))
+    tipo = str(input('Digite o tipo do aúdio (Musica, PodCast, AudioBook): '))
+    duracao = float(input('Digite a duração do aúdio: '))
+
+    if tipo.upper() == "MUSICA":
+        musica = nome
+        cantor = str(input('Digite o cantor da música: '))
+        categoria = str(input('Digite a categoria da música: '))
+        musica = Musica(nome,cantor,categoria,duracao)
+        while True:
+            ''' CRIANDO O INPUT DA NOTA COM TRATAMENTO PARA ERRO '''
+            try:
+                nota = float(input("Nota para a Música"))
+                musica.receber_avaliacao('Anônimo', nota)
+                break
+            except ValueError as e: 
+                print('Erro Tente Novamente!!')
+                input("tecle para tentar novamente.")
+        print('Música adicionada com sucesso!\n')
+        input("Clique e volte ao menu")
+        menu()
+    elif tipo.upper() == "PODCAST":
+        pod = nome
+        anfitriao = str(input("Digite nome do anfitrião: "))
+        episodio = int(input("Digite o episódio: "))
+        pod = PodCast(nome, duracao, episodio, anfitriao)
+        while True:
+            ''' CRIANDO O INPUT DA NOTA COM TRATAMENTO PARA ERRO '''
+            try:
+                nota = float(input("Nota para Podcast"))
+                pod.receber_avaliacao('Anônimo', nota)
+                break
+            except ValueError as e: 
+                print('Erro Tente Novamente!!')
+                input("tecle para tentar novamente.")
+        print('Podcast adicionado com sucesso!\n')
+        input("Clique e volte ao menu")
+        menu()
+    elif tipo.upper() == "AUDIOBOOK":
+        book = nome
+        autor = str(input("Digite nome do autor: "))
+        book = AudioBook(nome, duracao, autor)
+        while True:
+            ''' CRIANDO O INPUT DA NOTA COM TRATAMENTO PARA ERRO '''
+            try:
+                nota = float(input("Nota para o AudioBook"))
+                book.receber_avaliacao('Anônimo', nota)
+                break
+            except ValueError as e: 
+                print('Erro Tente Novamente!!')
+                input("tecle para tentar novamente.")
+        print('AudioBook adicionado com sucesso!\n')
+        input("Clique e volte ao menu")
+        menu()
+
+
 
 
 def listar():
     '''LISTAR AS MUSICAS '''
-    subtitulo("LISTANDO MÚSICAS")
-    Musica.listar_musicas()
-    input('Tecle para voltar ao menu')
-    menu()
+    print('1- Listar Musicas \n 2- Listar Podcast \n 3- Listar Audiobook')
+    try: 
+        escolha = int(input("O que deseja listar: "))
+        if escolha == 1:
+            subtitulo("LISTANDO MÚSICAS")
+            Musica.listar_musicas()
+            input('Tecle para voltar ao menu')
+            menu()
+        if escolha == 2:
+            subtitulo("LISTANDO PODCAST")
+            PodCast.listar_podcast()
+            input('Tecle para voltar ao menu')
+            menu()
+        if escolha == 3:
+            subtitulo("LISTANDO AudioBooks")
+            AudioBook.listar_audiobook()
+            input('Tecle para voltar ao menu')
+            menu()
+        
+    except:
+        opcao_invalida()
 
 def menu():
     '''LISTAR OPÇOES NO MENU PRINCIPAL'''
     subtitulo('Menu Principal')
-    print(' 1 - Menu \n 2 - Inserir Música \n 3- Listar Músicas \n 4- Encerrar App')
+    print(' 1 - Menu \n 2 - Inserir Item de aúdio \n 3- Listar aúdios \n 4- Encerrar App')
     try :
         escolha = int(input("Escolha entre as opções: "))
         if escolha == 1:
             menu()
         elif escolha == 2:
-            inserir_musica()
+            inserir_audio()
         elif escolha == 3:
             listar()
         elif escolha == 4:
